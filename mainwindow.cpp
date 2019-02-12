@@ -34,12 +34,12 @@ MainWindow::~MainWindow()
 void MainWindow::onclick_btn_sender()
 {
     s_options->show();
-    connect(r_options, &QDialog::accepted, this, [&](){is_sender = true;});
+    connect(s_options, &QDialog::accepted, this, [&](){is_sender = true;qDebug() << "sender";});
 }
 
 void MainWindow::onclick_btn_receiver()
 {
     r_options->show();
-    connect(r_options, &QDialog::accepted, this, [&](){is_receiver = true;});
+    connect(r_options, &QDialog::accepted, this, [&](){is_receiver = true;qDebug() << "rever";});
 }
 
