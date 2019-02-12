@@ -78,10 +78,14 @@ private:
     //functions (sender)
     void sender_tcp();
     void sender_udp();
+    void sender_tcp_stop();
+    void sender_udp_stop();
 
     //functions (receiver)
     void receiver_tcp();
     void receiver_udp();
+    void receiver_tcp_stop();
+    void receiver_udp_stop();
 
     //functions
     void init_ui();
@@ -91,7 +95,6 @@ private:
 public slots:
     void tcp_bind();
     void tcp_read_data();
-
     void udp_read_data();
 
 };

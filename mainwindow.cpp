@@ -119,8 +119,9 @@ void MainWindow::onclick_btn_select_file()
                                              tr("Select a .txt file to transfer"),
                                              "./",
                                              tr("Text File (*.txt)"));
-    file_selected.open(file_name.toStdString().c_str(), std::fstream::ate | std::fstream::binary);
-    file_size = file_selected.tellg();
+    std::ifstream temp(file_name.toStdString().c_str(), std::fstream::ate | std::fstream::binary);
+    file_size = temp.tellg();
+
     file_selected.seekg(0, file_selected.beg);
 
     ui->btn_select_file->setEnabled(false);
@@ -170,7 +171,6 @@ void MainWindow::sender_tcp()
     }
 
     ui->progress_bar->setValue(100);
-    tcp_socket->disconnectFromHost();
     onclick_btn_stop();
 }
 
@@ -192,14 +192,13 @@ void MainWindow::sender_udp()
     }
 
     ui->progress_bar->setValue(100);
-    udp_socket->disconnectFromHost();
     onclick_btn_stop();
 }
 
 void MainWindow::receiver_tcp()
 {
     tcp_server = new QTcpServer(this);
-    emit tcp_bind();
+    connect(tcp_server, SIGNAL(tcp_bind()), this, SLOT(tcp_bind()));
     if(tcp_server->listen(QHostAddress::Any, receiver_port_number)) qDebug() << "Error: Listening to port";
     else qDebug() << "Success: Listening to port " << receiver_port_number;
 }
@@ -233,6 +232,42 @@ void MainWindow::udp_read_data()
 
 void MainWindow::onclick_btn_stop()
 {
-
+    if(is_sender && is_tcp){
+        sender_tcp_stop();
+    }else if(is_sender && is_udp){
+        sender_udp_stop();
+    }else if(is_receiver && is_tcp){
+        receiver_tcp_stop();
+    }else if(is_receiver && is_udp){
+        receiver_udp_stop();
+    }
 }
 
+void MainWindow::sender_tcp_stop()
+{
+    file_selected.close();
+    tcp_socket->disconnectFromHost();
+}
+
+void MainWindow::sender_udp_stop()
+{
+    file_selected.close();
+    udp_socket->disconnectFromHost();
+}
+
+void MainWindow::receiver_tcp_stop()
+{
+    file_saved.close();
+    std::ifstream temp(file_name.toStdString().c_str(), std::fstream::ate | std::fstream::binary);
+    file_size = temp.tellg();
+    tcp_socket->disconnectFromHost();
+    tcp_server->disconnect();
+}
+
+void MainWindow::receiver_udp_stop()
+{
+    file_saved.close();
+    std::ifstream temp(file_name.toStdString().c_str(), std::fstream::ate | std::fstream::binary);
+    file_size = temp.tellg();
+    udp_socket->disconnectFromHost();
+}
