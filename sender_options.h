@@ -16,6 +16,7 @@ public:
     QLineEdit *lineEdit_port_number;
     QLineEdit *lineEdit_packet_size;
     QLineEdit *lineEdit_packet_count;
+    QDialogButtonBox *btn_box;
 
 private:
     Ui::sender_options ui;

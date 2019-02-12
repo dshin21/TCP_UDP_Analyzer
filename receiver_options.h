@@ -14,9 +14,11 @@ public:
     receiver_options(QDialog *parent = nullptr);
     QLineEdit *lineEdit_ip;
     QLineEdit *lineEdit_port_number;
+    QDialogButtonBox *btn_box;
 
 private:
     Ui::receiver_options ui;
+
 };
 
 #endif // RECEIVER_OPTIONS_H

@@ -1,4 +1,5 @@
 #include "receiver_options.h"
+#include <QDebug>
 
 receiver_options::receiver_options(QDialog *parent)
     : QDialog(parent)

@@ -22,9 +22,13 @@ private:
     sender_options *s_options;
     receiver_options *r_options;
 
+    bool is_receiver;
+    bool is_sender;
+
     void init_ui();
     void onclick_btn_sender();
     void onclick_btn_receiver();
+
 };
 
 #endif // MAINWINDOW_H
