@@ -7,6 +7,9 @@
 #include <QTcpServer>
 #include <QTcpSocket>
 #include <QUdpSocket>
+#include <QElapsedTimer>
+#include <QTime>
+
 
 //std lib
 #include <fstream>
@@ -45,6 +48,7 @@ private:
     int sender_port_number;
     int sender_packet_size;
     int sender_packet_count;
+    int total_bytes_transferred;
 
     char sender_buffer[65536];
 
@@ -64,6 +68,11 @@ private:
     int file_size;
     std::ifstream file_selected;
     std::ofstream file_saved;
+
+    //time variables
+    double total_transfer_time;
+    QTime timer;
+
 
     //functions (event handlers)
     void onclick_btn_sender();
@@ -91,11 +100,20 @@ private:
     void init_ui();
     void init_sender_variables();
     void init_receiver_variables();
+    void update_transfer_statistics();
 
 public slots:
-    void tcp_bind();
-    void tcp_read_data();
-    void udp_read_data();
+    void slot_tcp_bind();
+    void slot_tcp_read_data();
+    void slot_udp_read_data();
+    void slot_start_timer();
+    void slot_stop_timer();
+
+signals:
+    void signal_starting_send();
+    void signal_finished_send();
+    void signal_starting_read();
+    void signal_finished_read();
 
 };
 

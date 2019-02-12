@@ -37,6 +37,9 @@ void MainWindow::init_ui()
         ui->btn_stop->setEnabled(false);
         ui->btn_save_to_file->setEnabled(false);
         ui->btn_select_file->setEnabled(false);
+        ui->label_total_transfer_time->setText("Total Transfer Time: ");
+        ui->label_total_data_transferred->setText("Total Data Transferred: ");
+        ui->progress_bar->setValue(0);
         is_receiver = is_sender = is_tcp = is_udp = false;
         s_options = new sender_options;
         r_options = new receiver_options;
@@ -119,11 +122,10 @@ void MainWindow::onclick_btn_select_file()
                                              tr("Select a .txt file to transfer"),
                                              "./",
                                              tr("Text File (*.txt)"));
-    std::ifstream temp(file_name.toStdString().c_str(), std::fstream::ate | std::fstream::binary);
-    file_size = temp.tellg();
-
-    file_selected.seekg(0, file_selected.beg);
     file_selected.open(file_name.toStdString());
+    file_selected.seekg(0, file_selected.end);
+    file_size = file_selected.tellg();
+    file_selected.seekg(0, file_selected.beg);
 
     ui->btn_select_file->setEnabled(false);
     ui->btn_tcp->setEnabled(true);
@@ -161,6 +163,8 @@ void MainWindow::sender_tcp()
     double total = file_size * sender_packet_count;
 
     memset(sender_buffer, '\0', sender_packet_size + 1);
+    connect(this, SIGNAL(signal_starting_send()), this, SLOT(slot_start_timer()));
+    emit signal_starting_send();
     while(!file_selected.eof()){
         file_selected.read(sender_buffer, sender_packet_size);
         for(int i = 0; i < sender_packet_count; ++i){
@@ -182,6 +186,8 @@ void MainWindow::sender_udp()
     double total = file_size * sender_packet_count;
 
     memset(sender_buffer, '\0', sender_packet_size + 1);
+    connect(this, SIGNAL(signal_starting_send()), this, SLOT(slot_start_timer()));
+    emit signal_starting_send();
     while(!file_selected.eof()){
         file_selected.read(sender_buffer, sender_packet_size);
         for(int i = 0; i < sender_packet_count; ++i){
@@ -199,19 +205,19 @@ void MainWindow::sender_udp()
 void MainWindow::receiver_tcp()
 {
     tcp_server = new QTcpServer(this);
-    connect(tcp_server, SIGNAL(tcp_bind()), this, SLOT(tcp_bind()));
+    connect(tcp_server, SIGNAL(slot_tcp_bind()), this, SLOT(slot_tcp_bind()));
     if(tcp_server->listen(QHostAddress::Any, receiver_port_number)) qDebug() << "Error: Listening to port";
     else qDebug() << "Success: Listening to port " << receiver_port_number;
 }
 
-void MainWindow::tcp_bind()
+void MainWindow::slot_tcp_bind()
 {
     tcp_socket = tcp_server->nextPendingConnection();
     connect(tcp_socket, &QTcpSocket::disconnected, this, &MainWindow::onclick_btn_stop);
-    connect(tcp_server, SIGNAL(tcp_read_data()), this, SLOT(tcp_read_data()));
+    connect(tcp_server, SIGNAL(slot_tcp_read_data()), this, SLOT(slot_tcp_read_data()));
 }
 
-void MainWindow::tcp_read_data()
+void MainWindow::slot_tcp_read_data()
 {
     file_saved << tcp_socket->readAll().toStdString();
 }
@@ -220,10 +226,10 @@ void MainWindow::receiver_udp()
 {
     udp_socket = new QUdpSocket(this);
     udp_socket->bind(QHostAddress::Any, receiver_port_number);
-    connect(udp_socket, SIGNAL(udp_read_data()), this, SLOT(udp_read_data()));
+    connect(udp_socket, SIGNAL(slot_udp_read_data()), this, SLOT(slot_udp_read_data()));
 }
 
-void MainWindow::udp_read_data()
+void MainWindow::slot_udp_read_data()
 {
     receiver_udp_buffer.resize(udp_socket->pendingDatagramSize());
     int buffer_size = udp_socket->readDatagram(receiver_udp_buffer.data(), receiver_udp_buffer.size(), nullptr, nullptr);
@@ -246,12 +252,18 @@ void MainWindow::onclick_btn_stop()
 
 void MainWindow::sender_tcp_stop()
 {
+    connect(this, SIGNAL(signal_finished_send()), this, SLOT(slot_stop_timer()));
+    emit signal_finished_send();
+    update_transfer_statistics();
     file_selected.close();
     tcp_socket->disconnectFromHost();
 }
 
 void MainWindow::sender_udp_stop()
 {
+    connect(this, SIGNAL(signal_finished_send()), this, SLOT(slot_stop_timer()));
+    emit signal_finished_send();
+    update_transfer_statistics();
     file_selected.close();
     udp_socket->disconnectFromHost();
 }
@@ -271,4 +283,20 @@ void MainWindow::receiver_udp_stop()
     std::ifstream temp(file_name.toStdString().c_str(), std::fstream::ate | std::fstream::binary);
     file_size = temp.tellg();
     udp_socket->disconnectFromHost();
+}
+
+void MainWindow::update_transfer_statistics()
+{
+    ui->label_total_data_transferred->setText(ui->label_total_data_transferred->text().append(QString::number(file_size * sender_packet_count)));
+}
+
+void MainWindow::slot_start_timer()
+{
+    timer.start();
+}
+
+void MainWindow::slot_stop_timer()
+{
+    total_transfer_time = timer.msec() / 1000.0;
+    ui->label_total_transfer_time->setText(ui->label_total_transfer_time->text().append(QString::number(total_transfer_time)).append(" s"));
 }

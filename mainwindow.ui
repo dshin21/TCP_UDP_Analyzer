@@ -149,7 +149,7 @@
      <enum>QProgressBar::BottomToTop</enum>
     </property>
    </widget>
-   <widget class="QWidget" name="">
+   <widget class="QWidget" name="layoutWidget">
     <property name="geometry">
      <rect>
       <x>20</x>
@@ -162,21 +162,14 @@
      <item>
       <widget class="QLabel" name="label_total_transfer_time">
        <property name="text">
-        <string>Total Transfer Time:</string>
+        <string>Total Transfer Time: </string>
        </property>
       </widget>
      </item>
      <item>
       <widget class="QLabel" name="label_total_data_transferred">
        <property name="text">
-        <string>Total Data Transferred:</string>
-       </property>
-      </widget>
-     </item>
-     <item>
-      <widget class="QLabel" name="label_total_packet_loss">
-       <property name="text">
-        <string>Total Packet Loss:</string>
+        <string>Total Data Transferred: </string>
        </property>
       </widget>
      </item>
