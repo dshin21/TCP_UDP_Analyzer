@@ -37,13 +37,23 @@ private:
     bool is_tcp;
     bool is_udp;
 
+    //state variables (sender)
+    QString sender_ip;
+    int sender_port_number;
+    int sender_packet_size;
+    int sender_packet_count;
+
+    //state variables (receiver)
+    QString receiver_ip;
+    int receiver_port_number;
+
     //file variables
     QString file_name;
     int file_size;
     std::ifstream file_selected;
     std::ofstream file_saved;
 
-    void init_ui();
+    //functions (event handlers)
     void onclick_btn_sender();
     void onclick_btn_receiver();
     void onclick_btn_tcp();
@@ -51,6 +61,21 @@ private:
     void onclick_btn_select_file();
     void onclick_btn_save_to_file();
     void onclick_btn_start();
+
+    //functions (sender)
+    void sender_tcp();
+    void sender_udp();
+
+    //functions (receiver)
+    void receiver_tcp();
+    void receiver_udp();
+
+    //functions
+    void init_ui();
+    void init_sender_variables();
+    void init_receiver_variables();
+
+
 
 };
 

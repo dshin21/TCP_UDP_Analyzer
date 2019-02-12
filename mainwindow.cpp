@@ -60,7 +60,17 @@ void MainWindow::onclick_btn_sender()
         ui->btn_sender->setEnabled(false);
         ui->btn_receiver->setEnabled(false);
         ui->btn_select_file->setEnabled(true);
+        init_sender_variables();
     });
+}
+
+void MainWindow::init_sender_variables()
+{
+    sender_ip = s_options->lineEdit_ip->text();
+    sender_port_number = s_options->lineEdit_port_number->text().toInt();
+    sender_packet_size = s_options->lineEdit_packet_size->text().toInt();
+    sender_packet_count = s_options->lineEdit_packet_count->text().toInt();
+    qDebug() <<  sender_ip << " " << sender_port_number << " " << sender_packet_size << " " << sender_packet_count;
 }
 
 void MainWindow::onclick_btn_receiver()
@@ -73,7 +83,15 @@ void MainWindow::onclick_btn_receiver()
         ui->btn_sender->setEnabled(false);
         ui->btn_receiver->setEnabled(false);
         ui->btn_save_to_file->setEnabled(true);
+        init_receiver_variables();
     });
+}
+
+void MainWindow::init_receiver_variables()
+{
+    receiver_ip = r_options->lineEdit_ip->text();
+    receiver_port_number = r_options->lineEdit_port_number->text().toInt();
+    qDebug() <<  receiver_ip << " " << receiver_port_number;
 }
 
 void MainWindow::onclick_btn_tcp()
@@ -114,5 +132,38 @@ void MainWindow::onclick_btn_save_to_file()
                                              "",
                                              tr("Text File (*.txt)"));
     file_saved.open(file_name.toStdString());
+}
+
+void MainWindow::onclick_btn_start()
+{
+    if(is_sender && is_tcp){
+        sender_tcp();
+    }else if(is_sender && is_udp){
+        sender_udp();
+    }else if(is_receiver && is_tcp){
+        receiver_tcp();
+    }else if(is_receiver && is_udp){
+        receiver_udp();
+    }
+}
+
+void MainWindow::sender_tcp()
+{
+
+}
+
+void MainWindow::sender_udp()
+{
+
+}
+
+void MainWindow::receiver_tcp()
+{
+
+}
+
+void MainWindow::receiver_udp()
+{
+
 }
 
