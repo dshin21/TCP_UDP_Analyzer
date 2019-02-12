@@ -106,9 +106,7 @@
     <property name="title">
      <string>Settings</string>
     </property>
-    <addaction name="separator"/>
-    <addaction name="actionOptions"/>
-    <addaction name="actionReset_to_default"/>
+    <addaction name="menu_reset"/>
    </widget>
    <addaction name="menuSettings"/>
   </widget>
@@ -118,9 +116,9 @@
     <string>Options</string>
    </property>
   </action>
-  <action name="actionReset_to_default">
+  <action name="menu_reset">
    <property name="text">
-    <string>Reset to default</string>
+    <string>Reset</string>
    </property>
   </action>
  </widget>
