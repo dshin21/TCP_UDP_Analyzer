@@ -15,5 +15,5 @@ sender_options::sender_options(QDialog *parent)
     lineEdit_packet_size->setText("10");
 
     lineEdit_packet_count = ui.lineEdit_packet_count;
-    lineEdit_packet_count->setText("1024");
+    lineEdit_packet_count->setText("10");
 }

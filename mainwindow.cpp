@@ -123,6 +123,7 @@ void MainWindow::onclick_btn_select_file()
     file_size = temp.tellg();
 
     file_selected.seekg(0, file_selected.beg);
+    file_selected.open(file_name.toStdString());
 
     ui->btn_select_file->setEnabled(false);
     ui->btn_tcp->setEnabled(true);
