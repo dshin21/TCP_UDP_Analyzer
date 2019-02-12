@@ -4,6 +4,9 @@
 //qt lib
 #include <QMainWindow>
 #include <QFiledialog>
+#include <QTcpServer>
+#include <QTcpSocket>
+#include <QUdpSocket>
 
 //std lib
 #include <fstream>
@@ -37,15 +40,24 @@ private:
     bool is_tcp;
     bool is_udp;
 
-    //state variables (sender)
+    //variables (sender)
     QString sender_ip;
     int sender_port_number;
     int sender_packet_size;
     int sender_packet_count;
 
-    //state variables (receiver)
+    char sender_buffer[65536];
+
+    //variables (receiver)
     QString receiver_ip;
     int receiver_port_number;
+
+    QByteArray receiver_udp_buffer;
+
+    //variables (tcp/udp)
+    QTcpServer *tcp_server;
+    QTcpSocket *tcp_socket;
+    QUdpSocket *udp_socket;
 
     //file variables
     QString file_name;
@@ -61,6 +73,7 @@ private:
     void onclick_btn_select_file();
     void onclick_btn_save_to_file();
     void onclick_btn_start();
+    void onclick_btn_stop();
 
     //functions (sender)
     void sender_tcp();
@@ -75,7 +88,11 @@ private:
     void init_sender_variables();
     void init_receiver_variables();
 
+public slots:
+    void tcp_bind();
+    void tcp_read_data();
 
+    void udp_read_data();
 
 };
 

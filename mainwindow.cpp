@@ -25,6 +25,9 @@ void MainWindow::init_ui()
     connect(ui->btn_select_file, &QPushButton::clicked, this, &MainWindow::onclick_btn_select_file);
     connect(ui->btn_save_to_file, &QPushButton::clicked, this, &MainWindow::onclick_btn_save_to_file);
 
+    connect(ui->btn_start, &QPushButton::clicked, this, &MainWindow::onclick_btn_start);
+    connect(ui->btn_stop, &QPushButton::clicked, this, &MainWindow::onclick_btn_stop);
+
     connect(ui->menu_reset, &QAction::triggered, this, [&](){
         ui->btn_sender->setEnabled(true);
         ui->btn_receiver->setEnabled(true);
@@ -149,20 +152,86 @@ void MainWindow::onclick_btn_start()
 
 void MainWindow::sender_tcp()
 {
+    tcp_socket = new QTcpSocket(this);
+    tcp_socket->connectToHost(QHostAddress(sender_ip), sender_port_number);
 
+    double current = 0;
+    double total = file_size * sender_packet_count;
+
+    memset(sender_buffer, '\0', sender_packet_size + 1);
+    while(!file_selected.eof()){
+        file_selected.read(sender_buffer, sender_packet_size);
+        for(int i = 0; i < sender_packet_count; ++i){
+            int current_progress = (current / total) * 100;
+            current += tcp_socket->write(sender_buffer);
+            ui->progress_bar->setValue(current_progress);
+        }
+        memset(sender_buffer, '\0', sender_packet_size + 1);
+    }
+
+    ui->progress_bar->setValue(100);
+    tcp_socket->disconnectFromHost();
+    onclick_btn_stop();
 }
 
 void MainWindow::sender_udp()
 {
+    udp_socket = new QUdpSocket(this);
+    double current = 0;
+    double total = file_size * sender_packet_count;
 
+    memset(sender_buffer, '\0', sender_packet_size + 1);
+    while(!file_selected.eof()){
+        file_selected.read(sender_buffer, sender_packet_size);
+        for(int i = 0; i < sender_packet_count; ++i){
+            int current_progress = (current / total) * 100;
+            current += udp_socket->writeDatagram(sender_buffer, QHostAddress(sender_ip), sender_port_number);
+            ui->progress_bar->setValue(current_progress);
+        }
+        memset(sender_buffer, '\0', sender_packet_size + 1);
+    }
+
+    ui->progress_bar->setValue(100);
+    udp_socket->disconnectFromHost();
+    onclick_btn_stop();
 }
 
 void MainWindow::receiver_tcp()
 {
+    tcp_server = new QTcpServer(this);
+    emit tcp_bind();
+    if(tcp_server->listen(QHostAddress::Any, receiver_port_number)) qDebug() << "Error: Listening to port";
+    else qDebug() << "Success: Listening to port " << receiver_port_number;
+}
 
+void MainWindow::tcp_bind()
+{
+    tcp_socket = tcp_server->nextPendingConnection();
+    connect(tcp_socket, &QTcpSocket::disconnected, this, &MainWindow::onclick_btn_stop);
+    connect(tcp_server, SIGNAL(tcp_read_data()), this, SLOT(tcp_read_data()));
+}
+
+void MainWindow::tcp_read_data()
+{
+    file_saved << tcp_socket->readAll().toStdString();
 }
 
 void MainWindow::receiver_udp()
+{
+    udp_socket = new QUdpSocket(this);
+    udp_socket->bind(QHostAddress::Any, receiver_port_number);
+    connect(udp_socket, SIGNAL(udp_read_data()), this, SLOT(udp_read_data()));
+}
+
+void MainWindow::udp_read_data()
+{
+    receiver_udp_buffer.resize(udp_socket->pendingDatagramSize());
+    int buffer_size = udp_socket->readDatagram(receiver_udp_buffer.data(), receiver_udp_buffer.size(), nullptr, nullptr);
+    file_saved << receiver_udp_buffer.toStdString();
+    if(buffer_size == 0) onclick_btn_stop();
+}
+
+void MainWindow::onclick_btn_stop()
 {
 
 }
