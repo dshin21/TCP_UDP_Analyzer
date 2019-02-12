@@ -1,9 +1,11 @@
 #ifndef SENDER_OPTIONS_H
 #define SENDER_OPTIONS_H
 
+//qt lib
 #include <QDialog>
 #include <QLineEdit>
 
+//my headers
 #include "ui_sender_options.h"
 
 class sender_options : public QDialog
@@ -12,6 +14,7 @@ class sender_options : public QDialog
 
 public:
     sender_options(QDialog *parent = nullptr);
+    //UI components
     QLineEdit *lineEdit_ip;
     QLineEdit *lineEdit_port_number;
     QLineEdit *lineEdit_packet_size;
