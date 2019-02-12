@@ -13,32 +13,108 @@
   <property name="windowTitle">
    <string>Dialog</string>
   </property>
+  <widget class="QLineEdit" name="lineEdit_ip">
+   <property name="geometry">
+    <rect>
+     <x>100</x>
+     <y>50</y>
+     <width>157</width>
+     <height>20</height>
+    </rect>
+   </property>
+  </widget>
+  <widget class="QLineEdit" name="lineEdit_packet_size">
+   <property name="geometry">
+    <rect>
+     <x>100</x>
+     <y>150</y>
+     <width>157</width>
+     <height>20</height>
+    </rect>
+   </property>
+  </widget>
+  <widget class="QLineEdit" name="lineEdit_packet_count">
+   <property name="geometry">
+    <rect>
+     <x>100</x>
+     <y>200</y>
+     <width>157</width>
+     <height>20</height>
+    </rect>
+   </property>
+  </widget>
+  <widget class="QLineEdit" name="lineEdit_port_number">
+   <property name="geometry">
+    <rect>
+     <x>100</x>
+     <y>100</y>
+     <width>157</width>
+     <height>20</height>
+    </rect>
+   </property>
+  </widget>
+  <widget class="QLabel" name="label_ip">
+   <property name="geometry">
+    <rect>
+     <x>10</x>
+     <y>50</y>
+     <width>64</width>
+     <height>21</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>IP Address</string>
+   </property>
+  </widget>
+  <widget class="QLabel" name="label_packet_count">
+   <property name="geometry">
+    <rect>
+     <x>10</x>
+     <y>200</y>
+     <width>64</width>
+     <height>21</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>Packet Count</string>
+   </property>
+  </widget>
+  <widget class="QLabel" name="label_packet_size">
+   <property name="geometry">
+    <rect>
+     <x>10</x>
+     <y>150</y>
+     <width>64</width>
+     <height>21</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>Packet Size</string>
+   </property>
+  </widget>
+  <widget class="QLabel" name="label_port_number">
+   <property name="geometry">
+    <rect>
+     <x>10</x>
+     <y>100</y>
+     <width>64</width>
+     <height>21</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>Port Number</string>
+   </property>
+  </widget>
   <widget class="QWidget" name="">
    <property name="geometry">
     <rect>
      <x>90</x>
-     <y>20</y>
+     <y>250</y>
      <width>161</width>
-     <height>261</height>
+     <height>31</height>
     </rect>
    </property>
    <layout class="QVBoxLayout" name="verticalLayout_2">
-    <item>
-     <layout class="QVBoxLayout" name="verticalLayout">
-      <item>
-       <widget class="QLineEdit" name="lineEdit_ip"/>
-      </item>
-      <item>
-       <widget class="QLineEdit" name="lineEdit_port_number"/>
-      </item>
-      <item>
-       <widget class="QLineEdit" name="lineEdit_packet_size"/>
-      </item>
-      <item>
-       <widget class="QLineEdit" name="lineEdit_packet_count"/>
-      </item>
-     </layout>
-    </item>
     <item>
      <widget class="QDialogButtonBox" name="buttonBox">
       <property name="orientation">
@@ -46,46 +122,6 @@
       </property>
       <property name="standardButtons">
        <set>QDialogButtonBox::Cancel|QDialogButtonBox::Ok</set>
-      </property>
-     </widget>
-    </item>
-   </layout>
-  </widget>
-  <widget class="QWidget" name="">
-   <property name="geometry">
-    <rect>
-     <x>20</x>
-     <y>40</y>
-     <width>66</width>
-     <height>191</height>
-    </rect>
-   </property>
-   <layout class="QVBoxLayout" name="verticalLayout_3">
-    <item>
-     <widget class="QLabel" name="label_ip">
-      <property name="text">
-       <string>IP Address</string>
-      </property>
-     </widget>
-    </item>
-    <item>
-     <widget class="QLabel" name="label_port_number">
-      <property name="text">
-       <string>Port Number</string>
-      </property>
-     </widget>
-    </item>
-    <item>
-     <widget class="QLabel" name="label_packet_size">
-      <property name="text">
-       <string>Packet Size</string>
-      </property>
-     </widget>
-    </item>
-    <item>
-     <widget class="QLabel" name="label_packet_count">
-      <property name="text">
-       <string>Packet Count</string>
       </property>
      </widget>
     </item>

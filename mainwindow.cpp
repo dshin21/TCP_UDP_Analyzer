@@ -6,7 +6,8 @@
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
     ui(new Ui::MainWindow),
-    s_options(new sender_options)
+    s_options(new sender_options),
+    r_options(new receiver_options)
 {
     ui->setupUi(this);
     init_ui();
