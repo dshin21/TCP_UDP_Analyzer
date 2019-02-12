@@ -11,9 +11,9 @@ class receiver_options : public QDialog
     Q_OBJECT
 
 public:
-    explicit receiver_options(QDialog *parent = nullptr);
-    QLineEdit *label_ip;
-    QLineEdit *label_port_number;
+    receiver_options(QDialog *parent = nullptr);
+    QLineEdit *lineEdit_ip;
+    QLineEdit *lineEdit_port_number;
 
 private:
     Ui::receiver_options ui;

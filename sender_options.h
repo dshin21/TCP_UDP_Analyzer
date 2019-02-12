@@ -11,11 +11,11 @@ class sender_options : public QDialog
     Q_OBJECT
 
 public:
-    explicit sender_options(QDialog *parent = nullptr);
-    QLineEdit *label_ip;
-    QLineEdit *label_port_number;
-    QLineEdit *label_packet_size;
-    QLineEdit *label_packet_count;
+    sender_options(QDialog *parent = nullptr);
+    QLineEdit *lineEdit_ip;
+    QLineEdit *lineEdit_port_number;
+    QLineEdit *lineEdit_packet_size;
+    QLineEdit *lineEdit_packet_count;
 
 private:
     Ui::sender_options ui;
