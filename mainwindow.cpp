@@ -142,14 +142,7 @@ void MainWindow::onclick_btn_save_to_file()
                                              tr(""),
                                              "",
                                              tr("Text File (*.txt)"));
-    //    qDebug() << new QString(receiver_buffer);
-    file_receiver.open(file_name.toStdString());
-    file_receiver << receiver_buffer.toStdString();
-    file_receiver.seekg(0, file_receiver.end);
-    file_size = file_receiver.tellg();
-    file_receiver.seekg(0, file_receiver.beg);
-    file_receiver.close();
-    file_receiver.open(file_name.toStdString());
+    file_receiver->rename(file_name);
 }
 
 void MainWindow::onclick_btn_start()
@@ -244,18 +237,26 @@ void MainWindow::receiver_udp()
 
 void MainWindow::readyRead()
 {
-    if(is_receiver && is_tcp){
-        receiver_buffer.append(tcp_socket->readAll());
-        qDebug() << new QString(receiver_buffer.constData());
-        //        file_receiver << temp.toStdString();
+
+    file_receiver = new QFile ("temp.txt");
+    if (file_receiver->open(QIODevice::ReadWrite)) {
+        QTextStream stream(file_receiver);
+
+        if(is_receiver && is_tcp){
+//            receiver_buffer.append(tcp_socket->readAll());
+            stream << tcp_socket->readAll();
+        }
+
+        if(is_receiver && is_udp){
+            receiver_buffer.resize(udp_socket->pendingDatagramSize());
+            int buffer_size = udp_socket->readDatagram(receiver_buffer.data(), receiver_buffer.size(), nullptr, nullptr);
+            stream << receiver_buffer;
+            if(buffer_size == 0) onclick_btn_stop();
+        }
     }
 
-    if(is_receiver && is_udp){
-        receiver_buffer.resize(udp_socket->pendingDatagramSize());
-        int buffer_size = udp_socket->readDatagram(receiver_buffer.data(), receiver_buffer.size(), nullptr, nullptr);
-        file_receiver << receiver_buffer.toStdString();
-        if(buffer_size == 0) onclick_btn_stop();
-    }
+    file_size = file_receiver->size();
+    file_receiver->close();
 }
 
 void MainWindow::onclick_btn_stop()
@@ -293,22 +294,13 @@ void MainWindow::sender_udp_stop()
 
 void MainWindow::receiver_tcp_stop()
 {
-    //    file_receiver.close();
-    //    std::ifstream temp(file_name.toStdString().c_str(), std::fstream::ate | std::fstream::binary);
-    //    file_size = temp.tellg();
-
-    //    file_receiver.open(file_name.toStdString());
-    //    file_receiver.seekg(0, file_receiver.end);
-    //    file_size = file_receiver.tellg();
-    //    file_receiver.seekg(0, file_receiver.beg);
-
     tcp_socket->disconnectFromHost();
     tcp_server->disconnect();
 }
 
 void MainWindow::receiver_udp_stop()
 {
-    file_receiver.close();
+    file_receiver->close();
     std::ifstream temp(file_name.toStdString().c_str(), std::fstream::ate | std::fstream::binary);
     file_size = temp.tellg();
     udp_socket->disconnectFromHost();

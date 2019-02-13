@@ -9,7 +9,8 @@
 #include <QUdpSocket>
 #include <QElapsedTimer>
 #include <QTime>
-
+#include <QFile>
+#include <QTextStream>
 
 //std lib
 #include <fstream>
@@ -67,7 +68,7 @@ private:
     QString file_name;
     int file_size;
     std::fstream file_sender;
-    std::fstream file_receiver;
+    QFile *file_receiver;
 
     //time variables
     double total_transfer_time;
