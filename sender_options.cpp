@@ -9,7 +9,7 @@ sender_options::sender_options(QDialog *parent)
     lineEdit_ip->setText("193.161.193.99");
 
     lineEdit_port_number = ui.lineEdit_port_number;
-    lineEdit_port_number->setText("36162");
+    lineEdit_port_number->setText("32907");
 
     lineEdit_packet_size = ui.lineEdit_packet_size;
     lineEdit_packet_size->setText("10");
