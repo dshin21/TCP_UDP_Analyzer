@@ -17,6 +17,9 @@ MainWindow::MainWindow(QWidget *parent) :
 
 void MainWindow::init_ui()
 {
+    ui->progress_bar->hide();
+    ui->receiver_console->hide();
+
     connect(ui->btn_sender, &QPushButton::clicked, this, &MainWindow::onclick_btn_sender);
     connect(ui->btn_receiver, &QPushButton::clicked, this, &MainWindow::onclick_btn_receiver);
 
@@ -70,6 +73,7 @@ void MainWindow::onclick_btn_sender()
         ui->btn_sender->setEnabled(false);
         ui->btn_receiver->setEnabled(false);
         ui->btn_select_file->setEnabled(true);
+        ui->progress_bar->show();
         init_sender_variables();
     });
 }
@@ -93,6 +97,7 @@ void MainWindow::onclick_btn_receiver()
         ui->btn_sender->setEnabled(false);
         ui->btn_receiver->setEnabled(false);
         ui->btn_save_to_file->setEnabled(true);
+        ui->receiver_console->show();
         file_name = "receiver.txt";
         init_receiver_variables();
     });
@@ -186,6 +191,7 @@ void MainWindow::sender_tcp()
         memset(sender_buffer, '\0', sender_packet_size + 1);
     }
 
+    file_sender.seekg(0, file_sender.beg);
     ui->progress_bar->setValue(100);
     onclick_btn_stop();
 }
@@ -193,7 +199,6 @@ void MainWindow::sender_tcp()
 void MainWindow::sender_udp()
 {
     udp_socket = new QUdpSocket(this);
-    //    udp_socket->connectToHost(QHostAddress(sender_ip), sender_port_number, QIODevice::ReadWrite);
 
     connect(this, SIGNAL(signal_starting_send()), this, SLOT(slot_start_timer()));
     emit signal_starting_send();
@@ -215,6 +220,9 @@ void MainWindow::sender_udp()
         memset(sender_buffer, '\0', sender_packet_size + 1);
     }
 
+    file_sender.seekg(0, file_sender.beg);
+    udp_socket->writeDatagram("", QHostAddress(sender_ip), sender_port_number);
+
     ui->progress_bar->setValue(100);
     onclick_btn_stop();
 }
@@ -222,8 +230,12 @@ void MainWindow::sender_udp()
 void MainWindow::receiver_tcp()
 {
     tcp_server = new QTcpServer(this);
+    file_receiver = new QFile ("temp.txt");
+    file_receiver->open(QIODevice::WriteOnly | QIODevice::Text);
+
     connect(tcp_server, SIGNAL(newConnection()), this, SLOT(newConnection()));
-    connect(tcp_server, SIGNAL(newConnection()), this, SLOT(test()));
+    connect(this, SIGNAL(signal_starting_send()), this, SLOT(slot_start_timer()));
+    emit signal_starting_send();
 
     if(!tcp_server->listen(QHostAddress::Any, receiver_port_number)) qDebug() << "Error: Listening to port";
     else qDebug() << "Success (TCP): Listening to port " << receiver_port_number;
@@ -241,30 +253,37 @@ void MainWindow::receiver_udp()
 {
     udp_socket = new QUdpSocket(this);
     udp_socket->bind(QHostAddress::Any, receiver_port_number);
+    file_receiver = new QFile ("temp.txt");
+    file_receiver->open(QIODevice::WriteOnly | QIODevice::Text);
+
+    connect(this, SIGNAL(signal_starting_send()), this, SLOT(slot_start_timer()));
+    emit signal_starting_send();
+
     connect(udp_socket, &QUdpSocket::readyRead, this, &MainWindow::readyRead);
 }
 
 void MainWindow::readyRead()
-{
-    file_receiver = new QFile ("temp.txt");
-    if (file_receiver->open(QIODevice::ReadWrite)) {
-        QTextStream stream(file_receiver);
+{  
+    QTextStream stream(file_receiver);
 
-        if(is_receiver && is_tcp){
-            stream << tcp_socket->readAll();
-        }
+    if(is_receiver && is_tcp){
+        QByteArray data = tcp_socket->readAll();
+        stream << data;
+        ui->receiver_console->appendPlainText(data);
+        onclick_btn_stop();
+    }
 
-        if(is_receiver && is_udp){
-            receiver_buffer.resize(udp_socket->pendingDatagramSize());
-            int buffer_size = udp_socket->readDatagram(receiver_buffer.data(), receiver_buffer.size(), nullptr, nullptr);
+    if(is_receiver && is_udp){
+        receiver_buffer.resize(udp_socket->pendingDatagramSize());
+        udp_socket->readDatagram(receiver_buffer.data(), receiver_buffer.size(), nullptr, nullptr);
+        stream << receiver_buffer;
+        ui->receiver_console->appendPlainText(receiver_buffer);
 
-            stream << receiver_buffer;
-            if(buffer_size == 0) onclick_btn_stop();
-        }
+        if(receiver_buffer.size() == 0)
+            onclick_btn_stop();
     }
 
     file_size = file_receiver->size();
-    file_receiver->close();
 }
 
 
@@ -285,9 +304,7 @@ void MainWindow::sender_tcp_stop()
 {
     connect(this, SIGNAL(signal_finished_send()), this, SLOT(slot_stop_timer()));
     emit signal_finished_send();
-
     update_transfer_statistics();
-
     file_sender.close();
     tcp_socket->disconnectFromHost();
 }
@@ -303,21 +320,26 @@ void MainWindow::sender_udp_stop()
 
 void MainWindow::receiver_tcp_stop()
 {
+    connect(this, SIGNAL(signal_finished_send()), this, SLOT(slot_stop_timer()));
+    emit signal_finished_send();
+    update_transfer_statistics();
+    file_receiver->close();
     tcp_socket->disconnectFromHost();
     tcp_server->disconnect();
 }
 
 void MainWindow::receiver_udp_stop()
 {
+    connect(this, SIGNAL(signal_finished_send()), this, SLOT(slot_stop_timer()));
+    emit signal_finished_send();
+    update_transfer_statistics();
     file_receiver->close();
-    std::ifstream temp(file_name.toStdString().c_str(), std::fstream::ate | std::fstream::binary);
-    file_size = temp.tellg();
     udp_socket->disconnectFromHost();
 }
 
 void MainWindow::update_transfer_statistics()
 {
-    ui->label_total_data_transferred->setText(ui->label_total_data_transferred->text().append(QString::number(file_size * sender_packet_count)));
+    ui->label_total_data_transferred->setText(QString("Total Data Transferred: ").append(QString::number(file_size * sender_packet_count)));
 }
 
 void MainWindow::slot_start_timer()
@@ -328,6 +350,6 @@ void MainWindow::slot_start_timer()
 void MainWindow::slot_stop_timer()
 {
     total_transfer_time = timer.msec() / 1000.0;
-    ui->label_total_transfer_time->setText(ui->label_total_transfer_time->text().append(QString::number(total_transfer_time)).append(" s"));
+    ui->label_total_transfer_time->setText(QString("Total Transfer Time: ").append(QString::number(total_transfer_time)).append(" s"));
 }
 

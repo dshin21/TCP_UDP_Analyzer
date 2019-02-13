@@ -175,6 +175,16 @@
      </item>
     </layout>
    </widget>
+   <widget class="QPlainTextEdit" name="receiver_console">
+    <property name="geometry">
+     <rect>
+      <x>10</x>
+      <y>120</y>
+      <width>251</width>
+      <height>101</height>
+     </rect>
+    </property>
+   </widget>
   </widget>
   <widget class="QMenuBar" name="menuBar">
    <property name="geometry">
