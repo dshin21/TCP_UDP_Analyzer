@@ -56,7 +56,7 @@ private:
     QString receiver_ip;
     int receiver_port_number;
 
-    QByteArray receiver_udp_buffer;
+    QByteArray receiver_buffer;
 
     //variables (tcp/udp)
     QTcpServer *tcp_server;
@@ -66,8 +66,8 @@ private:
     //file variables
     QString file_name;
     int file_size;
-    std::ifstream file_selected;
-    std::ofstream file_saved;
+    std::fstream file_sender;
+    std::fstream file_receiver;
 
     //time variables
     double total_transfer_time;
@@ -103,9 +103,8 @@ private:
     void update_transfer_statistics();
 
 public slots:
-    void slot_tcp_bind();
-    void slot_tcp_read_data();
-    void slot_udp_read_data();
+    void newConnection();
+    void readyRead();
     void slot_start_timer();
     void slot_stop_timer();
 

@@ -41,6 +41,9 @@ void MainWindow::init_ui()
         ui->label_total_data_transferred->setText("Total Data Transferred: ");
         ui->progress_bar->setValue(0);
         is_receiver = is_sender = is_tcp = is_udp = false;
+        tcp_server = nullptr;
+        tcp_socket = nullptr;
+        udp_socket = nullptr;
         s_options = new sender_options;
         r_options = new receiver_options;
     });
@@ -89,6 +92,7 @@ void MainWindow::onclick_btn_receiver()
         ui->btn_sender->setEnabled(false);
         ui->btn_receiver->setEnabled(false);
         ui->btn_save_to_file->setEnabled(true);
+        file_name = "receiver.txt";
         init_receiver_variables();
     });
 }
@@ -122,10 +126,10 @@ void MainWindow::onclick_btn_select_file()
                                              tr("Select a .txt file to transfer"),
                                              "./",
                                              tr("Text File (*.txt)"));
-    file_selected.open(file_name.toStdString());
-    file_selected.seekg(0, file_selected.end);
-    file_size = file_selected.tellg();
-    file_selected.seekg(0, file_selected.beg);
+    file_sender.open(file_name.toStdString());
+    file_sender.seekg(0, file_sender.end);
+    file_size = file_sender.tellg();
+    file_sender.seekg(0, file_sender.beg);
 
     ui->btn_select_file->setEnabled(false);
     ui->btn_tcp->setEnabled(true);
@@ -135,14 +139,22 @@ void MainWindow::onclick_btn_select_file()
 void MainWindow::onclick_btn_save_to_file()
 {
     file_name = QFileDialog::getSaveFileName(this,
-                                             tr("results.txt"),
+                                             tr(""),
                                              "",
                                              tr("Text File (*.txt)"));
-    file_saved.open(file_name.toStdString());
+    //    qDebug() << new QString(receiver_buffer);
+    file_receiver.open(file_name.toStdString());
+    file_receiver << receiver_buffer.toStdString();
+    file_receiver.seekg(0, file_receiver.end);
+    file_size = file_receiver.tellg();
+    file_receiver.seekg(0, file_receiver.beg);
+    file_receiver.close();
+    file_receiver.open(file_name.toStdString());
 }
 
 void MainWindow::onclick_btn_start()
 {
+    ui->btn_stop->setEnabled(true);
     if(is_sender && is_tcp){
         sender_tcp();
     }else if(is_sender && is_udp){
@@ -159,14 +171,18 @@ void MainWindow::sender_tcp()
     tcp_socket = new QTcpSocket(this);
     tcp_socket->connectToHost(QHostAddress(sender_ip), sender_port_number);
 
+    connect(this, SIGNAL(signal_starting_send()), this, SLOT(slot_start_timer()));
+    emit signal_starting_send();
+
     double current = 0;
     double total = file_size * sender_packet_count;
 
     memset(sender_buffer, '\0', sender_packet_size + 1);
-    connect(this, SIGNAL(signal_starting_send()), this, SLOT(slot_start_timer()));
-    emit signal_starting_send();
-    while(!file_selected.eof()){
-        file_selected.read(sender_buffer, sender_packet_size);
+
+    while(!file_sender.eof()){
+
+        file_sender.read(sender_buffer, sender_packet_size);
+
         for(int i = 0; i < sender_packet_count; ++i){
             int current_progress = (current / total) * 100;
             current += tcp_socket->write(sender_buffer);
@@ -188,8 +204,8 @@ void MainWindow::sender_udp()
     memset(sender_buffer, '\0', sender_packet_size + 1);
     connect(this, SIGNAL(signal_starting_send()), this, SLOT(slot_start_timer()));
     emit signal_starting_send();
-    while(!file_selected.eof()){
-        file_selected.read(sender_buffer, sender_packet_size);
+    while(!file_sender.eof()){
+        file_sender.read(sender_buffer, sender_packet_size);
         for(int i = 0; i < sender_packet_count; ++i){
             int current_progress = (current / total) * 100;
             current += udp_socket->writeDatagram(sender_buffer, QHostAddress(sender_ip), sender_port_number);
@@ -205,36 +221,41 @@ void MainWindow::sender_udp()
 void MainWindow::receiver_tcp()
 {
     tcp_server = new QTcpServer(this);
-    connect(tcp_server, SIGNAL(slot_tcp_bind()), this, SLOT(slot_tcp_bind()));
-    if(tcp_server->listen(QHostAddress::Any, receiver_port_number)) qDebug() << "Error: Listening to port";
+    connect(tcp_server, SIGNAL(newConnection()), this, SLOT(newConnection()));
+
+    if(!tcp_server->listen(QHostAddress::Any, receiver_port_number)) qDebug() << "Error: Listening to port";
     else qDebug() << "Success: Listening to port " << receiver_port_number;
 }
 
-void MainWindow::slot_tcp_bind()
+void MainWindow::newConnection()
 {
     tcp_socket = tcp_server->nextPendingConnection();
-    connect(tcp_socket, &QTcpSocket::disconnected, this, &MainWindow::onclick_btn_stop);
-    connect(tcp_server, SIGNAL(slot_tcp_read_data()), this, SLOT(slot_tcp_read_data()));
-}
 
-void MainWindow::slot_tcp_read_data()
-{
-    file_saved << tcp_socket->readAll().toStdString();
+    connect(tcp_socket, &QTcpSocket::disconnected, this, &MainWindow::onclick_btn_stop);
+    connect(tcp_socket, SIGNAL(readyRead()), this, SLOT(readyRead()));
 }
 
 void MainWindow::receiver_udp()
 {
     udp_socket = new QUdpSocket(this);
     udp_socket->bind(QHostAddress::Any, receiver_port_number);
-    connect(udp_socket, SIGNAL(slot_udp_read_data()), this, SLOT(slot_udp_read_data()));
+    connect(this, SIGNAL(readyRead()), this, SLOT(readyRead()));
 }
 
-void MainWindow::slot_udp_read_data()
+void MainWindow::readyRead()
 {
-    receiver_udp_buffer.resize(udp_socket->pendingDatagramSize());
-    int buffer_size = udp_socket->readDatagram(receiver_udp_buffer.data(), receiver_udp_buffer.size(), nullptr, nullptr);
-    file_saved << receiver_udp_buffer.toStdString();
-    if(buffer_size == 0) onclick_btn_stop();
+    if(is_receiver && is_tcp){
+        receiver_buffer.append(tcp_socket->readAll());
+        qDebug() << new QString(receiver_buffer.constData());
+        //        file_receiver << temp.toStdString();
+    }
+
+    if(is_receiver && is_udp){
+        receiver_buffer.resize(udp_socket->pendingDatagramSize());
+        int buffer_size = udp_socket->readDatagram(receiver_buffer.data(), receiver_buffer.size(), nullptr, nullptr);
+        file_receiver << receiver_buffer.toStdString();
+        if(buffer_size == 0) onclick_btn_stop();
+    }
 }
 
 void MainWindow::onclick_btn_stop()
@@ -254,8 +275,10 @@ void MainWindow::sender_tcp_stop()
 {
     connect(this, SIGNAL(signal_finished_send()), this, SLOT(slot_stop_timer()));
     emit signal_finished_send();
+
     update_transfer_statistics();
-    file_selected.close();
+
+    file_sender.close();
     tcp_socket->disconnectFromHost();
 }
 
@@ -264,22 +287,28 @@ void MainWindow::sender_udp_stop()
     connect(this, SIGNAL(signal_finished_send()), this, SLOT(slot_stop_timer()));
     emit signal_finished_send();
     update_transfer_statistics();
-    file_selected.close();
+    file_sender.close();
     udp_socket->disconnectFromHost();
 }
 
 void MainWindow::receiver_tcp_stop()
 {
-    file_saved.close();
-    std::ifstream temp(file_name.toStdString().c_str(), std::fstream::ate | std::fstream::binary);
-    file_size = temp.tellg();
+    //    file_receiver.close();
+    //    std::ifstream temp(file_name.toStdString().c_str(), std::fstream::ate | std::fstream::binary);
+    //    file_size = temp.tellg();
+
+    //    file_receiver.open(file_name.toStdString());
+    //    file_receiver.seekg(0, file_receiver.end);
+    //    file_size = file_receiver.tellg();
+    //    file_receiver.seekg(0, file_receiver.beg);
+
     tcp_socket->disconnectFromHost();
     tcp_server->disconnect();
 }
 
 void MainWindow::receiver_udp_stop()
 {
-    file_saved.close();
+    file_receiver.close();
     std::ifstream temp(file_name.toStdString().c_str(), std::fstream::ate | std::fstream::binary);
     file_size = temp.tellg();
     udp_socket->disconnectFromHost();
