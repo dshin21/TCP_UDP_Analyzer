@@ -6,7 +6,7 @@
 #include <QNetworkDatagram>
 
 /*------------------------------------------------------------------------------------------------------------------
--- SOURCE FILE: mainwindow.cpp - 
+-- SOURCE FILE: mainwindow.cpp - A program that transfers/receives text files via TCP/UDP protocol.
 --
 -- PROGRAM:     tcpudp
 --
@@ -19,18 +19,22 @@
 --              void onclick_btn_save_to_file();
 --              void onclick_btn_start();
 --              void onclick_btn_stop();
+
 --              void sender_tcp();
 --              void sender_udp();
 --              void sender_tcp_stop();
 --              void sender_udp_stop();
+
 --              void receiver_tcp();
 --              void receiver_udp();
 --              void receiver_tcp_stop();
 --              void receiver_udp_stop();
+
 --              void init_ui();
 --              void init_sender_variables();
 --              void init_receiver_variables();
 --              void update_transfer_statistics();
+--              
 --              // Slots
 --              void newConnection();
 --              void readyRead();
@@ -46,7 +50,21 @@
 -- PROGRAMMER:  Daniel Shin
 --
 -- NOTES:
---              
+--              The program gives the user two choices: sender or receiver.
+--                  Sender:
+--                      Once the user selects the sender option, the user is able to:
+--                          - specify destination IP address
+--                          - specify destination port number
+--                          - specify the packet size
+--                          - specify the number of packet(s) to send
+--                          - select a text file from their machine
+--                          - select a protocol to use to send (TCP/UDP)
+--                  Receiver:
+--                      Once the user selects the receiver option, the user is able to:
+--                          - specify destination IP address
+--                          - specify destination port number
+--                          - save the received text file to their machine
+--                          - select a protocol to use to receive (TCP/UDP)
 ----------------------------------------------------------------------------------------------------------------------*/
 MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent),
                                           ui(new Ui::MainWindow),
@@ -76,12 +94,14 @@ MainWindow::~MainWindow()
 -- RETURNS:     void
 --
 -- NOTES:
---              
+--              This function connects all the UI components to it's UI event handlers and sets 
+--              the initial states for all the UI components.
 ----------------------------------------------------------------------------------------------------------------------*/
 void MainWindow::init_ui()
 {
     ui->progress_bar->hide();
     ui->receiver_console->hide();
+    ui->label_preview->hide();
 
     connect(ui->btn_sender, &QPushButton::clicked, this, &MainWindow::onclick_btn_sender);
     connect(ui->btn_receiver, &QPushButton::clicked, this, &MainWindow::onclick_btn_receiver);
@@ -124,7 +144,7 @@ void MainWindow::init_ui()
 }
 
 /*------------------------------------------------------------------------------------------------------------------
--- FUNCTION:    init_ui
+-- FUNCTION:    onclick_btn_sender
 --
 -- DATE:        Feb.12, 2019
 --
@@ -132,12 +152,13 @@ void MainWindow::init_ui()
 --
 -- PROGRAMMER:  Daniel Shin
 --
--- INTERFACE:   void init_ui()
+-- INTERFACE:   void onclick_btn_sender()
 --
 -- RETURNS:     void
 --
 -- NOTES:
---              
+--              This function is called when the user selects the "sender" button.
+--              It triggers the sender options dialog and enables sender functionalities on exit.
 ----------------------------------------------------------------------------------------------------------------------*/
 void MainWindow::onclick_btn_sender()
 {
@@ -153,7 +174,7 @@ void MainWindow::onclick_btn_sender()
 }
 
 /*------------------------------------------------------------------------------------------------------------------
--- FUNCTION:    init_ui
+-- FUNCTION:    init_sender_variables
 --
 -- DATE:        Feb.12, 2019
 --
@@ -161,12 +182,13 @@ void MainWindow::onclick_btn_sender()
 --
 -- PROGRAMMER:  Daniel Shin
 --
--- INTERFACE:   void init_ui()
+-- INTERFACE:   void init_sender_variables()
 --
 -- RETURNS:     void
 --
 -- NOTES:
---              
+--              This function initializes the user specified parameters for sender option: 
+--                  IP address, port, packet size and number of packets
 ----------------------------------------------------------------------------------------------------------------------*/
 void MainWindow::init_sender_variables()
 {
@@ -174,11 +196,10 @@ void MainWindow::init_sender_variables()
     sender_port_number = s_options->lineEdit_port_number->text().toInt();
     sender_packet_size = s_options->lineEdit_packet_size->text().toInt();
     sender_packet_count = s_options->lineEdit_packet_count->text().toInt();
-    qDebug() << sender_ip << " " << sender_port_number << " " << sender_packet_size << " " << sender_packet_count;
 }
 
 /*------------------------------------------------------------------------------------------------------------------
--- FUNCTION:    init_ui
+-- FUNCTION:    onclick_btn_receiver
 --
 -- DATE:        Feb.12, 2019
 --
@@ -186,12 +207,14 @@ void MainWindow::init_sender_variables()
 --
 -- PROGRAMMER:  Daniel Shin
 --
--- INTERFACE:   void init_ui()
+-- INTERFACE:   void onclick_btn_receiver()
 --
 -- RETURNS:     void
 --
 -- NOTES:
---              
+--              This function is called when the user selects the "receiver" button.
+--              It triggers the receiver options dialog and enables receiver functionalities on 
+--              exit.
 ----------------------------------------------------------------------------------------------------------------------*/
 void MainWindow::onclick_btn_receiver()
 {
@@ -204,13 +227,14 @@ void MainWindow::onclick_btn_receiver()
         ui->btn_receiver->setEnabled(false);
         ui->btn_save_to_file->setEnabled(true);
         ui->receiver_console->show();
+        ui->label_preview->show();
         file_name = "receiver.txt";
         init_receiver_variables();
     });
 }
 
 /*------------------------------------------------------------------------------------------------------------------
--- FUNCTION:    init_ui
+-- FUNCTION:    init_receiver_variables
 --
 -- DATE:        Feb.12, 2019
 --
@@ -218,22 +242,22 @@ void MainWindow::onclick_btn_receiver()
 --
 -- PROGRAMMER:  Daniel Shin
 --
--- INTERFACE:   void init_ui()
+-- INTERFACE:   void init_receiver_variables()
 --
 -- RETURNS:     void
 --
 -- NOTES:
---              
+--              This function initializes the user specified parameters for receiver option: 
+--                  IP address and port 
 ----------------------------------------------------------------------------------------------------------------------*/
 void MainWindow::init_receiver_variables()
 {
     receiver_ip = r_options->lineEdit_ip->text();
     receiver_port_number = r_options->lineEdit_port_number->text().toInt();
-    qDebug() << receiver_ip << " " << receiver_port_number;
 }
 
 /*------------------------------------------------------------------------------------------------------------------
--- FUNCTION:    init_ui
+-- FUNCTION:    onclick_btn_tcp
 --
 -- DATE:        Feb.12, 2019
 --
@@ -241,12 +265,13 @@ void MainWindow::init_receiver_variables()
 --
 -- PROGRAMMER:  Daniel Shin
 --
--- INTERFACE:   void init_ui()
+-- INTERFACE:   void onclick_btn_tcp()
 --
 -- RETURNS:     void
 --
 -- NOTES:
---              
+--              This function flags that the user has chosen TCP as the protocol and enables next 
+--              set of sender functionalities.
 ----------------------------------------------------------------------------------------------------------------------*/
 void MainWindow::onclick_btn_tcp()
 {
@@ -257,7 +282,7 @@ void MainWindow::onclick_btn_tcp()
 }
 
 /*------------------------------------------------------------------------------------------------------------------
--- FUNCTION:    init_ui
+-- FUNCTION:    onclick_btn_udp
 --
 -- DATE:        Feb.12, 2019
 --
@@ -265,12 +290,13 @@ void MainWindow::onclick_btn_tcp()
 --
 -- PROGRAMMER:  Daniel Shin
 --
--- INTERFACE:   void init_ui()
+-- INTERFACE:   void onclick_btn_udp()
 --
 -- RETURNS:     void
 --
 -- NOTES:
---              
+--              This function flags that the user has chosen UDP as the protocol and enables next 
+--              set of sender functionalities.
 ----------------------------------------------------------------------------------------------------------------------*/
 void MainWindow::onclick_btn_udp()
 {
@@ -280,6 +306,23 @@ void MainWindow::onclick_btn_udp()
     ui->btn_start->setEnabled(true);
 }
 
+/*------------------------------------------------------------------------------------------------------------------
+-- FUNCTION:    onclick_btn_select_file
+--
+-- DATE:        Feb.12, 2019
+--
+-- DESIGNER:    Daniel Shin
+--
+-- PROGRAMMER:  Daniel Shin
+--
+-- INTERFACE:   void onclick_btn_select_file()
+--
+-- RETURNS:     void
+--
+-- NOTES:
+--              This function opens the file explorer for the user to select the text file to be 
+--              sent and enables next set of sender functionalities.
+----------------------------------------------------------------------------------------------------------------------*/
 void MainWindow::onclick_btn_select_file()
 {
     file_name = QFileDialog::getOpenFileName(this, tr("Select a .txt file to transfer"), "./", tr("Text File (*.txt)"));
@@ -294,7 +337,7 @@ void MainWindow::onclick_btn_select_file()
 }
 
 /*------------------------------------------------------------------------------------------------------------------
--- FUNCTION:    init_ui
+-- FUNCTION:    onclick_btn_save_to_file
 --
 -- DATE:        Feb.12, 2019
 --
@@ -302,12 +345,12 @@ void MainWindow::onclick_btn_select_file()
 --
 -- PROGRAMMER:  Daniel Shin
 --
--- INTERFACE:   void init_ui()
+-- INTERFACE:   void onclick_btn_save_to_file()
 --
 -- RETURNS:     void
 --
 -- NOTES:
---              
+--              This function opens the file explorer for the user to save the received text file.
 ----------------------------------------------------------------------------------------------------------------------*/
 void MainWindow::onclick_btn_save_to_file()
 {
@@ -316,7 +359,7 @@ void MainWindow::onclick_btn_save_to_file()
 }
 
 /*------------------------------------------------------------------------------------------------------------------
--- FUNCTION:    init_ui
+-- FUNCTION:    onclick_btn_start
 --
 -- DATE:        Feb.12, 2019
 --
@@ -324,12 +367,15 @@ void MainWindow::onclick_btn_save_to_file()
 --
 -- PROGRAMMER:  Daniel Shin
 --
--- INTERFACE:   void init_ui()
+-- INTERFACE:   void onclick_btn_start()
 --
 -- RETURNS:     void
 --
 -- NOTES:
---              
+--              This function is called when the user clicks the "start" button, having selected 
+--              either sender/receiver and specified all the necessary options.
+--              The function enables the stop button and determines which pair of options the user
+--              had selected to start.
 ----------------------------------------------------------------------------------------------------------------------*/
 void MainWindow::onclick_btn_start()
 {
@@ -354,7 +400,7 @@ void MainWindow::onclick_btn_start()
 }
 
 /*------------------------------------------------------------------------------------------------------------------
--- FUNCTION:    init_ui
+-- FUNCTION:    sender_tcp
 --
 -- DATE:        Feb.12, 2019
 --
@@ -362,12 +408,13 @@ void MainWindow::onclick_btn_start()
 --
 -- PROGRAMMER:  Daniel Shin
 --
--- INTERFACE:   void init_ui()
+-- INTERFACE:   void sender_tcp()
 --
 -- RETURNS:     void
 --
 -- NOTES:
---              
+--              This function is called when the user has chosen the pair: sender + TCP + start.
+--              It creates a TCP socket and connects/transfers data to the user defined host.
 ----------------------------------------------------------------------------------------------------------------------*/
 void MainWindow::sender_tcp()
 {
@@ -401,7 +448,7 @@ void MainWindow::sender_tcp()
 }
 
 /*------------------------------------------------------------------------------------------------------------------
--- FUNCTION:    init_ui
+-- FUNCTION:    sender_udp
 --
 -- DATE:        Feb.12, 2019
 --
@@ -409,12 +456,13 @@ void MainWindow::sender_tcp()
 --
 -- PROGRAMMER:  Daniel Shin
 --
--- INTERFACE:   void init_ui()
+-- INTERFACE:   void sender_udp()
 --
 -- RETURNS:     void
 --
 -- NOTES:
---              
+--              This function is called when the user has chosen the pair: sender + UDP + start.
+--              It creates a UDP socket and connects/transfers data to the user defined host.
 ----------------------------------------------------------------------------------------------------------------------*/
 void MainWindow::sender_udp()
 {
@@ -430,7 +478,6 @@ void MainWindow::sender_udp()
 
     while (!file_sender.eof())
     {
-
         file_sender.read(sender_buffer, sender_packet_size);
 
         for (int i = 0; i < sender_packet_count; ++i)
@@ -450,7 +497,7 @@ void MainWindow::sender_udp()
 }
 
 /*------------------------------------------------------------------------------------------------------------------
--- FUNCTION:    init_ui
+-- FUNCTION:    receiver_tcp
 --
 -- DATE:        Feb.12, 2019
 --
@@ -458,12 +505,13 @@ void MainWindow::sender_udp()
 --
 -- PROGRAMMER:  Daniel Shin
 --
--- INTERFACE:   void init_ui()
+-- INTERFACE:   void receiver_tcp()
 --
 -- RETURNS:     void
 --
 -- NOTES:
---              
+--              This function is called when the user has chosen the pair: receiver + TCP + start.
+--              It creates a TCP server and listens to the incoming data from the user defined host.
 ----------------------------------------------------------------------------------------------------------------------*/
 void MainWindow::receiver_tcp()
 {
@@ -482,7 +530,7 @@ void MainWindow::receiver_tcp()
 }
 
 /*------------------------------------------------------------------------------------------------------------------
--- FUNCTION:    init_ui
+-- FUNCTION:    newConnection
 --
 -- DATE:        Feb.12, 2019
 --
@@ -490,12 +538,13 @@ void MainWindow::receiver_tcp()
 --
 -- PROGRAMMER:  Daniel Shin
 --
--- INTERFACE:   void init_ui()
+-- INTERFACE:   void newConnection()
 --
 -- RETURNS:     void
 --
 -- NOTES:
---              
+--              This function is a Qt slot that gets triggered when the TCP server gets an incoming
+--              connection. The function binds the server to the socket.
 ----------------------------------------------------------------------------------------------------------------------*/
 void MainWindow::newConnection()
 {
@@ -506,7 +555,7 @@ void MainWindow::newConnection()
 }
 
 /*------------------------------------------------------------------------------------------------------------------
--- FUNCTION:    init_ui
+-- FUNCTION:    receiver_udp
 --
 -- DATE:        Feb.12, 2019
 --
@@ -514,12 +563,13 @@ void MainWindow::newConnection()
 --
 -- PROGRAMMER:  Daniel Shin
 --
--- INTERFACE:   void init_ui()
+-- INTERFACE:   void receiver_udp()
 --
 -- RETURNS:     void
 --
 -- NOTES:
---              
+--              This function is called when the user has chosen the pair: receiver + UDP + start.
+--              It creates a new UDP socket and binds to the user defined host.
 ----------------------------------------------------------------------------------------------------------------------*/
 void MainWindow::receiver_udp()
 {
@@ -535,7 +585,7 @@ void MainWindow::receiver_udp()
 }
 
 /*------------------------------------------------------------------------------------------------------------------
--- FUNCTION:    init_ui
+-- FUNCTION:    readyRead
 --
 -- DATE:        Feb.12, 2019
 --
@@ -543,12 +593,14 @@ void MainWindow::receiver_udp()
 --
 -- PROGRAMMER:  Daniel Shin
 --
--- INTERFACE:   void init_ui()
+-- INTERFACE:   void readyRead()
 --
 -- RETURNS:     void
 --
 -- NOTES:
---              
+--              This function is a Qt slot that gets triggered when either the TCP or UDP socket 
+--              gets incoming data. It reads the data from the socket and write to the file and 
+--              displays on the preview console.
 ----------------------------------------------------------------------------------------------------------------------*/
 void MainWindow::readyRead()
 {
@@ -577,7 +629,7 @@ void MainWindow::readyRead()
 }
 
 /*------------------------------------------------------------------------------------------------------------------
--- FUNCTION:    init_ui
+-- FUNCTION:    onclick_btn_stop
 --
 -- DATE:        Feb.12, 2019
 --
@@ -585,12 +637,13 @@ void MainWindow::readyRead()
 --
 -- PROGRAMMER:  Daniel Shin
 --
--- INTERFACE:   void init_ui()
+-- INTERFACE:   void onclick_btn_stop()
 --
 -- RETURNS:     void
 --
 -- NOTES:
---              
+--              This function is called when the user clicks the "stop" button.
+--              The function determines which pair of options the user had selected to stop.
 ----------------------------------------------------------------------------------------------------------------------*/
 void MainWindow::onclick_btn_stop()
 {
@@ -613,7 +666,7 @@ void MainWindow::onclick_btn_stop()
 }
 
 /*------------------------------------------------------------------------------------------------------------------
--- FUNCTION:    init_ui
+-- FUNCTION:    sender_tcp_stop
 --
 -- DATE:        Feb.12, 2019
 --
@@ -621,12 +674,13 @@ void MainWindow::onclick_btn_stop()
 --
 -- PROGRAMMER:  Daniel Shin
 --
--- INTERFACE:   void init_ui()
+-- INTERFACE:   void sender_tcp_stop()
 --
 -- RETURNS:     void
 --
 -- NOTES:
---              
+--              This function is called when the user has chosen the pair: sender + TCP + stop.
+--              It cleans up all the aquired resources and updates the transfer statistics.
 ----------------------------------------------------------------------------------------------------------------------*/
 void MainWindow::sender_tcp_stop()
 {
@@ -638,7 +692,7 @@ void MainWindow::sender_tcp_stop()
 }
 
 /*------------------------------------------------------------------------------------------------------------------
--- FUNCTION:    init_ui
+-- FUNCTION:    sender_udp_stop
 --
 -- DATE:        Feb.12, 2019
 --
@@ -646,12 +700,13 @@ void MainWindow::sender_tcp_stop()
 --
 -- PROGRAMMER:  Daniel Shin
 --
--- INTERFACE:   void init_ui()
+-- INTERFACE:   void sender_udp_stop()
 --
 -- RETURNS:     void
 --
 -- NOTES:
---              
+--              This function is called when the user has chosen the pair: sender + UDP + stop.
+--              It cleans up all the aquired resources and updates the transfer statistics.
 ----------------------------------------------------------------------------------------------------------------------*/
 void MainWindow::sender_udp_stop()
 {
@@ -663,7 +718,7 @@ void MainWindow::sender_udp_stop()
 }
 
 /*------------------------------------------------------------------------------------------------------------------
--- FUNCTION:    init_ui
+-- FUNCTION:    receiver_tcp_stop
 --
 -- DATE:        Feb.12, 2019
 --
@@ -671,12 +726,13 @@ void MainWindow::sender_udp_stop()
 --
 -- PROGRAMMER:  Daniel Shin
 --
--- INTERFACE:   void init_ui()
+-- INTERFACE:   void receiver_tcp_stop()
 --
 -- RETURNS:     void
 --
 -- NOTES:
---              
+--              This function is called when the user has chosen the pair: receiver + TCP + stop.
+--              It cleans up all the aquired resources and updates the transfer statistics.
 ----------------------------------------------------------------------------------------------------------------------*/
 void MainWindow::receiver_tcp_stop()
 {
@@ -689,7 +745,7 @@ void MainWindow::receiver_tcp_stop()
 }
 
 /*------------------------------------------------------------------------------------------------------------------
--- FUNCTION:    init_ui
+-- FUNCTION:    receiver_udp_stop
 --
 -- DATE:        Feb.12, 2019
 --
@@ -697,12 +753,13 @@ void MainWindow::receiver_tcp_stop()
 --
 -- PROGRAMMER:  Daniel Shin
 --
--- INTERFACE:   void init_ui()
+-- INTERFACE:   void receiver_udp_stop()
 --
 -- RETURNS:     void
 --
 -- NOTES:
---              
+--              This function is called when the user has chosen the pair: receiver + UDP + stop.
+--              It cleans up all the aquired resources and updates the transfer statistics.
 ----------------------------------------------------------------------------------------------------------------------*/
 void MainWindow::receiver_udp_stop()
 {
@@ -714,7 +771,7 @@ void MainWindow::receiver_udp_stop()
 }
 
 /*------------------------------------------------------------------------------------------------------------------
--- FUNCTION:    init_ui
+-- FUNCTION:    update_transfer_statistics
 --
 -- DATE:        Feb.12, 2019
 --
@@ -722,20 +779,20 @@ void MainWindow::receiver_udp_stop()
 --
 -- PROGRAMMER:  Daniel Shin
 --
--- INTERFACE:   void init_ui()
+-- INTERFACE:   void update_transfer_statistics()
 --
 -- RETURNS:     void
 --
 -- NOTES:
---              
+--              This function updates the UI responsible for displaying total data transferred.
 ----------------------------------------------------------------------------------------------------------------------*/
 void MainWindow::update_transfer_statistics()
 {
-    ui->label_total_data_transferred->setText(QString("Total Data Transferred: ").append(QString::number(file_size * sender_packet_count)));
+    ui->label_total_data_transferred->setText(QString("Total Data Transferred: ").append(QString::number((file_size * sender_packet_count)/1000.0)).append(" KB"));
 }
 
 /*------------------------------------------------------------------------------------------------------------------
--- FUNCTION:    init_ui
+-- FUNCTION:    slot_start_timer
 --
 -- DATE:        Feb.12, 2019
 --
@@ -743,12 +800,13 @@ void MainWindow::update_transfer_statistics()
 --
 -- PROGRAMMER:  Daniel Shin
 --
--- INTERFACE:   void init_ui()
+-- INTERFACE:   void slot_start_timer()
 --
 -- RETURNS:     void
 --
 -- NOTES:
---              
+--              This function is a Qt slot that gets triggered when an operation (send/receive) started
+--              and starts the timer to measure the elapsed time.
 ----------------------------------------------------------------------------------------------------------------------*/
 void MainWindow::slot_start_timer()
 {
@@ -756,7 +814,7 @@ void MainWindow::slot_start_timer()
 }
 
 /*------------------------------------------------------------------------------------------------------------------
--- FUNCTION:    init_ui
+-- FUNCTION:    slot_stop_timer
 --
 -- DATE:        Feb.12, 2019
 --
@@ -764,12 +822,13 @@ void MainWindow::slot_start_timer()
 --
 -- PROGRAMMER:  Daniel Shin
 --
--- INTERFACE:   void init_ui()
+-- INTERFACE:   void slot_stop_timer()
 --
 -- RETURNS:     void
 --
 -- NOTES:
---              
+--              This function is a Qt slot that gets triggered when an operation (send/receive) finished
+--              and calculates the elapsed time in seconds, displaying it to the user.
 ----------------------------------------------------------------------------------------------------------------------*/
 void MainWindow::slot_stop_timer()
 {

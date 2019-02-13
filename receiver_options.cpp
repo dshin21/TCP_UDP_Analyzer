@@ -1,6 +1,23 @@
 #include "receiver_options.h"
-#include <QDebug>
-
+/*------------------------------------------------------------------------------------------------------------------
+-- SOURCE FILE: receiver_options.cpp - A Qt Dialog class for user to configure receiver settings.
+--
+-- PROGRAM:     tcpudp
+--
+-- FUNCTIONS:   N/A
+--
+-- DATE:        Feb.12, 2019
+--
+-- REVISIONS:   None
+--
+-- DESIGNER:    Daniel Shin
+--
+-- PROGRAMMER:  Daniel Shin
+--
+-- NOTES:
+--              This class initializes the user specified IP address and port number.
+--              If not specified, it is set to default values.
+----------------------------------------------------------------------------------------------------------------------*/
 receiver_options::receiver_options(QDialog *parent)
     : QDialog(parent)
 {
