@@ -74,7 +74,6 @@ private:
     double total_transfer_time;
     QTime timer;
 
-
     //functions (event handlers)
     void onclick_btn_sender();
     void onclick_btn_receiver();

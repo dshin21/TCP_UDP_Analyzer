@@ -5,16 +5,79 @@
 #include <QDebug>
 #include <QNetworkDatagram>
 
-MainWindow::MainWindow(QWidget *parent) :
-    QMainWindow(parent),
-    ui(new Ui::MainWindow),
-    s_options(new sender_options),
-    r_options(new receiver_options)
+/*------------------------------------------------------------------------------------------------------------------
+-- SOURCE FILE: mainwindow.cpp - 
+--
+-- PROGRAM:     tcpudp
+--
+-- FUNCTIONS:
+--              void onclick_btn_sender();
+--              void onclick_btn_receiver();
+--              void onclick_btn_tcp();
+--              void onclick_btn_udp();
+--              void onclick_btn_select_file();
+--              void onclick_btn_save_to_file();
+--              void onclick_btn_start();
+--              void onclick_btn_stop();
+--              void sender_tcp();
+--              void sender_udp();
+--              void sender_tcp_stop();
+--              void sender_udp_stop();
+--              void receiver_tcp();
+--              void receiver_udp();
+--              void receiver_tcp_stop();
+--              void receiver_udp_stop();
+--              void init_ui();
+--              void init_sender_variables();
+--              void init_receiver_variables();
+--              void update_transfer_statistics();
+--              // Slots
+--              void newConnection();
+--              void readyRead();
+--              void slot_start_timer();
+--              void slot_stop_timer();
+--
+-- DATE:        Feb.12, 2019
+--
+-- REVISIONS:   None
+--
+-- DESIGNER:    Daniel Shin
+--
+-- PROGRAMMER:  Daniel Shin
+--
+-- NOTES:
+--              
+----------------------------------------------------------------------------------------------------------------------*/
+MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent),
+                                          ui(new Ui::MainWindow),
+                                          s_options(new sender_options),
+                                          r_options(new receiver_options)
 {
     ui->setupUi(this);
     init_ui();
 }
 
+MainWindow::~MainWindow()
+{
+    delete ui;
+}
+
+/*------------------------------------------------------------------------------------------------------------------
+-- FUNCTION:    init_ui
+--
+-- DATE:        Feb.12, 2019
+--
+-- DESIGNER:    Daniel Shin
+--
+-- PROGRAMMER:  Daniel Shin
+--
+-- INTERFACE:   void init_ui()
+--
+-- RETURNS:     void
+--
+-- NOTES:
+--              
+----------------------------------------------------------------------------------------------------------------------*/
 void MainWindow::init_ui()
 {
     ui->progress_bar->hide();
@@ -32,7 +95,7 @@ void MainWindow::init_ui()
     connect(ui->btn_start, &QPushButton::clicked, this, &MainWindow::onclick_btn_start);
     connect(ui->btn_stop, &QPushButton::clicked, this, &MainWindow::onclick_btn_stop);
 
-    connect(ui->menu_reset, &QAction::triggered, this, [&](){
+    connect(ui->menu_reset, &QAction::triggered, this, [&]() {
         ui->btn_sender->setEnabled(true);
         ui->btn_receiver->setEnabled(true);
         ui->btn_tcp->setEnabled(false);
@@ -60,15 +123,26 @@ void MainWindow::init_ui()
     ui->btn_save_to_file->setEnabled(false);
 }
 
-MainWindow::~MainWindow()
-{
-    delete ui;
-}
-
+/*------------------------------------------------------------------------------------------------------------------
+-- FUNCTION:    init_ui
+--
+-- DATE:        Feb.12, 2019
+--
+-- DESIGNER:    Daniel Shin
+--
+-- PROGRAMMER:  Daniel Shin
+--
+-- INTERFACE:   void init_ui()
+--
+-- RETURNS:     void
+--
+-- NOTES:
+--              
+----------------------------------------------------------------------------------------------------------------------*/
 void MainWindow::onclick_btn_sender()
 {
     s_options->show();
-    connect(s_options, &QDialog::accepted, this, [&](){
+    connect(s_options, &QDialog::accepted, this, [&]() {
         is_sender = true;
         ui->btn_sender->setEnabled(false);
         ui->btn_receiver->setEnabled(false);
@@ -78,19 +152,51 @@ void MainWindow::onclick_btn_sender()
     });
 }
 
+/*------------------------------------------------------------------------------------------------------------------
+-- FUNCTION:    init_ui
+--
+-- DATE:        Feb.12, 2019
+--
+-- DESIGNER:    Daniel Shin
+--
+-- PROGRAMMER:  Daniel Shin
+--
+-- INTERFACE:   void init_ui()
+--
+-- RETURNS:     void
+--
+-- NOTES:
+--              
+----------------------------------------------------------------------------------------------------------------------*/
 void MainWindow::init_sender_variables()
 {
     sender_ip = s_options->lineEdit_ip->text();
     sender_port_number = s_options->lineEdit_port_number->text().toInt();
     sender_packet_size = s_options->lineEdit_packet_size->text().toInt();
     sender_packet_count = s_options->lineEdit_packet_count->text().toInt();
-    qDebug() <<  sender_ip << " " << sender_port_number << " " << sender_packet_size << " " << sender_packet_count;
+    qDebug() << sender_ip << " " << sender_port_number << " " << sender_packet_size << " " << sender_packet_count;
 }
 
+/*------------------------------------------------------------------------------------------------------------------
+-- FUNCTION:    init_ui
+--
+-- DATE:        Feb.12, 2019
+--
+-- DESIGNER:    Daniel Shin
+--
+-- PROGRAMMER:  Daniel Shin
+--
+-- INTERFACE:   void init_ui()
+--
+-- RETURNS:     void
+--
+-- NOTES:
+--              
+----------------------------------------------------------------------------------------------------------------------*/
 void MainWindow::onclick_btn_receiver()
 {
     r_options->show();
-    connect(r_options, &QDialog::accepted, this, [&](){
+    connect(r_options, &QDialog::accepted, this, [&]() {
         is_receiver = true;
         ui->btn_tcp->setEnabled(true);
         ui->btn_udp->setEnabled(true);
@@ -103,13 +209,45 @@ void MainWindow::onclick_btn_receiver()
     });
 }
 
+/*------------------------------------------------------------------------------------------------------------------
+-- FUNCTION:    init_ui
+--
+-- DATE:        Feb.12, 2019
+--
+-- DESIGNER:    Daniel Shin
+--
+-- PROGRAMMER:  Daniel Shin
+--
+-- INTERFACE:   void init_ui()
+--
+-- RETURNS:     void
+--
+-- NOTES:
+--              
+----------------------------------------------------------------------------------------------------------------------*/
 void MainWindow::init_receiver_variables()
 {
     receiver_ip = r_options->lineEdit_ip->text();
     receiver_port_number = r_options->lineEdit_port_number->text().toInt();
-    qDebug() <<  receiver_ip << " " << receiver_port_number;
+    qDebug() << receiver_ip << " " << receiver_port_number;
 }
 
+/*------------------------------------------------------------------------------------------------------------------
+-- FUNCTION:    init_ui
+--
+-- DATE:        Feb.12, 2019
+--
+-- DESIGNER:    Daniel Shin
+--
+-- PROGRAMMER:  Daniel Shin
+--
+-- INTERFACE:   void init_ui()
+--
+-- RETURNS:     void
+--
+-- NOTES:
+--              
+----------------------------------------------------------------------------------------------------------------------*/
 void MainWindow::onclick_btn_tcp()
 {
     is_tcp = true;
@@ -118,6 +256,22 @@ void MainWindow::onclick_btn_tcp()
     ui->btn_start->setEnabled(true);
 }
 
+/*------------------------------------------------------------------------------------------------------------------
+-- FUNCTION:    init_ui
+--
+-- DATE:        Feb.12, 2019
+--
+-- DESIGNER:    Daniel Shin
+--
+-- PROGRAMMER:  Daniel Shin
+--
+-- INTERFACE:   void init_ui()
+--
+-- RETURNS:     void
+--
+-- NOTES:
+--              
+----------------------------------------------------------------------------------------------------------------------*/
 void MainWindow::onclick_btn_udp()
 {
     is_udp = true;
@@ -128,10 +282,7 @@ void MainWindow::onclick_btn_udp()
 
 void MainWindow::onclick_btn_select_file()
 {
-    file_name = QFileDialog::getOpenFileName(this,
-                                             tr("Select a .txt file to transfer"),
-                                             "./",
-                                             tr("Text File (*.txt)"));
+    file_name = QFileDialog::getOpenFileName(this, tr("Select a .txt file to transfer"), "./", tr("Text File (*.txt)"));
     file_sender.open(file_name.toStdString());
     file_sender.seekg(0, file_sender.end);
     file_size = file_sender.tellg();
@@ -142,30 +293,82 @@ void MainWindow::onclick_btn_select_file()
     ui->btn_udp->setEnabled(true);
 }
 
+/*------------------------------------------------------------------------------------------------------------------
+-- FUNCTION:    init_ui
+--
+-- DATE:        Feb.12, 2019
+--
+-- DESIGNER:    Daniel Shin
+--
+-- PROGRAMMER:  Daniel Shin
+--
+-- INTERFACE:   void init_ui()
+--
+-- RETURNS:     void
+--
+-- NOTES:
+--              
+----------------------------------------------------------------------------------------------------------------------*/
 void MainWindow::onclick_btn_save_to_file()
 {
-    file_name = QFileDialog::getSaveFileName(this,
-                                             tr(""),
-                                             "",
-                                             tr("Text File (*.txt)"));
+    file_name = QFileDialog::getSaveFileName(this, tr(""), "", tr("Text File (*.txt)"));
     file_receiver->rename(file_name);
 }
 
+/*------------------------------------------------------------------------------------------------------------------
+-- FUNCTION:    init_ui
+--
+-- DATE:        Feb.12, 2019
+--
+-- DESIGNER:    Daniel Shin
+--
+-- PROGRAMMER:  Daniel Shin
+--
+-- INTERFACE:   void init_ui()
+--
+-- RETURNS:     void
+--
+-- NOTES:
+--              
+----------------------------------------------------------------------------------------------------------------------*/
 void MainWindow::onclick_btn_start()
 {
     ui->btn_stop->setEnabled(true);
 
-    if(is_sender && is_tcp){
+    if (is_sender && is_tcp)
+    {
         sender_tcp();
-    }else if(is_sender && is_udp){
+    }
+    else if (is_sender && is_udp)
+    {
         sender_udp();
-    }else if(is_receiver && is_tcp){
+    }
+    else if (is_receiver && is_tcp)
+    {
         receiver_tcp();
-    }else if(is_receiver && is_udp){
+    }
+    else if (is_receiver && is_udp)
+    {
         receiver_udp();
     }
 }
 
+/*------------------------------------------------------------------------------------------------------------------
+-- FUNCTION:    init_ui
+--
+-- DATE:        Feb.12, 2019
+--
+-- DESIGNER:    Daniel Shin
+--
+-- PROGRAMMER:  Daniel Shin
+--
+-- INTERFACE:   void init_ui()
+--
+-- RETURNS:     void
+--
+-- NOTES:
+--              
+----------------------------------------------------------------------------------------------------------------------*/
 void MainWindow::sender_tcp()
 {
     tcp_socket = new QTcpSocket(this);
@@ -179,11 +382,12 @@ void MainWindow::sender_tcp()
 
     memset(sender_buffer, '\0', sender_packet_size + 1);
 
-    while(!file_sender.eof()){
-
+    while (!file_sender.eof())
+    {
         file_sender.read(sender_buffer, sender_packet_size);
 
-        for(int i = 0; i < sender_packet_count; ++i){
+        for (int i = 0; i < sender_packet_count; ++i)
+        {
             int current_progress = (current / total) * 100;
             current += tcp_socket->write(sender_buffer);
             ui->progress_bar->setValue(current_progress);
@@ -196,6 +400,22 @@ void MainWindow::sender_tcp()
     onclick_btn_stop();
 }
 
+/*------------------------------------------------------------------------------------------------------------------
+-- FUNCTION:    init_ui
+--
+-- DATE:        Feb.12, 2019
+--
+-- DESIGNER:    Daniel Shin
+--
+-- PROGRAMMER:  Daniel Shin
+--
+-- INTERFACE:   void init_ui()
+--
+-- RETURNS:     void
+--
+-- NOTES:
+--              
+----------------------------------------------------------------------------------------------------------------------*/
 void MainWindow::sender_udp()
 {
     udp_socket = new QUdpSocket(this);
@@ -208,11 +428,13 @@ void MainWindow::sender_udp()
 
     memset(sender_buffer, '\0', sender_packet_size + 1);
 
-    while(!file_sender.eof()){
+    while (!file_sender.eof())
+    {
 
         file_sender.read(sender_buffer, sender_packet_size);
 
-        for(int i = 0; i < sender_packet_count; ++i){
+        for (int i = 0; i < sender_packet_count; ++i)
+        {
             int current_progress = (current / total) * 100;
             current += udp_socket->writeDatagram(sender_buffer, QHostAddress(sender_ip), sender_port_number);
             ui->progress_bar->setValue(current_progress);
@@ -227,20 +449,54 @@ void MainWindow::sender_udp()
     onclick_btn_stop();
 }
 
+/*------------------------------------------------------------------------------------------------------------------
+-- FUNCTION:    init_ui
+--
+-- DATE:        Feb.12, 2019
+--
+-- DESIGNER:    Daniel Shin
+--
+-- PROGRAMMER:  Daniel Shin
+--
+-- INTERFACE:   void init_ui()
+--
+-- RETURNS:     void
+--
+-- NOTES:
+--              
+----------------------------------------------------------------------------------------------------------------------*/
 void MainWindow::receiver_tcp()
 {
     tcp_server = new QTcpServer(this);
-    file_receiver = new QFile ("temp.txt");
+    file_receiver = new QFile("temp.txt");
     file_receiver->open(QIODevice::WriteOnly | QIODevice::Text);
 
     connect(tcp_server, SIGNAL(newConnection()), this, SLOT(newConnection()));
     connect(this, SIGNAL(signal_starting_send()), this, SLOT(slot_start_timer()));
     emit signal_starting_send();
 
-    if(!tcp_server->listen(QHostAddress::Any, receiver_port_number)) qDebug() << "Error: Listening to port";
-    else qDebug() << "Success (TCP): Listening to port " << receiver_port_number;
+    if (!tcp_server->listen(QHostAddress::Any, receiver_port_number))
+        qDebug() << "Error: Listening to port";
+    else
+        qDebug() << "Success (TCP): Listening to port " << receiver_port_number;
 }
 
+/*------------------------------------------------------------------------------------------------------------------
+-- FUNCTION:    init_ui
+--
+-- DATE:        Feb.12, 2019
+--
+-- DESIGNER:    Daniel Shin
+--
+-- PROGRAMMER:  Daniel Shin
+--
+-- INTERFACE:   void init_ui()
+--
+-- RETURNS:     void
+--
+-- NOTES:
+--              
+----------------------------------------------------------------------------------------------------------------------*/
 void MainWindow::newConnection()
 {
     tcp_socket = tcp_server->nextPendingConnection();
@@ -249,11 +505,27 @@ void MainWindow::newConnection()
     connect(tcp_socket, SIGNAL(readyRead()), this, SLOT(readyRead()));
 }
 
+/*------------------------------------------------------------------------------------------------------------------
+-- FUNCTION:    init_ui
+--
+-- DATE:        Feb.12, 2019
+--
+-- DESIGNER:    Daniel Shin
+--
+-- PROGRAMMER:  Daniel Shin
+--
+-- INTERFACE:   void init_ui()
+--
+-- RETURNS:     void
+--
+-- NOTES:
+--              
+----------------------------------------------------------------------------------------------------------------------*/
 void MainWindow::receiver_udp()
 {
     udp_socket = new QUdpSocket(this);
     udp_socket->bind(QHostAddress::Any, receiver_port_number);
-    file_receiver = new QFile ("temp.txt");
+    file_receiver = new QFile("temp.txt");
     file_receiver->open(QIODevice::WriteOnly | QIODevice::Text);
 
     connect(this, SIGNAL(signal_starting_send()), this, SLOT(slot_start_timer()));
@@ -262,44 +534,100 @@ void MainWindow::receiver_udp()
     connect(udp_socket, &QUdpSocket::readyRead, this, &MainWindow::readyRead);
 }
 
+/*------------------------------------------------------------------------------------------------------------------
+-- FUNCTION:    init_ui
+--
+-- DATE:        Feb.12, 2019
+--
+-- DESIGNER:    Daniel Shin
+--
+-- PROGRAMMER:  Daniel Shin
+--
+-- INTERFACE:   void init_ui()
+--
+-- RETURNS:     void
+--
+-- NOTES:
+--              
+----------------------------------------------------------------------------------------------------------------------*/
 void MainWindow::readyRead()
-{  
+{
     QTextStream stream(file_receiver);
 
-    if(is_receiver && is_tcp){
+    if (is_receiver && is_tcp)
+    {
         QByteArray data = tcp_socket->readAll();
         stream << data;
         ui->receiver_console->appendPlainText(data);
         onclick_btn_stop();
     }
 
-    if(is_receiver && is_udp){
+    if (is_receiver && is_udp)
+    {
         receiver_buffer.resize(udp_socket->pendingDatagramSize());
         udp_socket->readDatagram(receiver_buffer.data(), receiver_buffer.size(), nullptr, nullptr);
         stream << receiver_buffer;
         ui->receiver_console->appendPlainText(receiver_buffer);
 
-        if(receiver_buffer.size() == 0)
+        if (receiver_buffer.size() == 0)
             onclick_btn_stop();
     }
 
     file_size = file_receiver->size();
 }
 
-
+/*------------------------------------------------------------------------------------------------------------------
+-- FUNCTION:    init_ui
+--
+-- DATE:        Feb.12, 2019
+--
+-- DESIGNER:    Daniel Shin
+--
+-- PROGRAMMER:  Daniel Shin
+--
+-- INTERFACE:   void init_ui()
+--
+-- RETURNS:     void
+--
+-- NOTES:
+--              
+----------------------------------------------------------------------------------------------------------------------*/
 void MainWindow::onclick_btn_stop()
 {
-    if(is_sender && is_tcp){
+    if (is_sender && is_tcp)
+    {
         sender_tcp_stop();
-    }else if(is_sender && is_udp){
+    }
+    else if (is_sender && is_udp)
+    {
         sender_udp_stop();
-    }else if(is_receiver && is_tcp){
+    }
+    else if (is_receiver && is_tcp)
+    {
         receiver_tcp_stop();
-    }else if(is_receiver && is_udp){
+    }
+    else if (is_receiver && is_udp)
+    {
         receiver_udp_stop();
     }
 }
 
+/*------------------------------------------------------------------------------------------------------------------
+-- FUNCTION:    init_ui
+--
+-- DATE:        Feb.12, 2019
+--
+-- DESIGNER:    Daniel Shin
+--
+-- PROGRAMMER:  Daniel Shin
+--
+-- INTERFACE:   void init_ui()
+--
+-- RETURNS:     void
+--
+-- NOTES:
+--              
+----------------------------------------------------------------------------------------------------------------------*/
 void MainWindow::sender_tcp_stop()
 {
     connect(this, SIGNAL(signal_finished_send()), this, SLOT(slot_stop_timer()));
@@ -309,6 +637,22 @@ void MainWindow::sender_tcp_stop()
     tcp_socket->disconnectFromHost();
 }
 
+/*------------------------------------------------------------------------------------------------------------------
+-- FUNCTION:    init_ui
+--
+-- DATE:        Feb.12, 2019
+--
+-- DESIGNER:    Daniel Shin
+--
+-- PROGRAMMER:  Daniel Shin
+--
+-- INTERFACE:   void init_ui()
+--
+-- RETURNS:     void
+--
+-- NOTES:
+--              
+----------------------------------------------------------------------------------------------------------------------*/
 void MainWindow::sender_udp_stop()
 {
     connect(this, SIGNAL(signal_finished_send()), this, SLOT(slot_stop_timer()));
@@ -318,6 +662,22 @@ void MainWindow::sender_udp_stop()
     udp_socket->disconnectFromHost();
 }
 
+/*------------------------------------------------------------------------------------------------------------------
+-- FUNCTION:    init_ui
+--
+-- DATE:        Feb.12, 2019
+--
+-- DESIGNER:    Daniel Shin
+--
+-- PROGRAMMER:  Daniel Shin
+--
+-- INTERFACE:   void init_ui()
+--
+-- RETURNS:     void
+--
+-- NOTES:
+--              
+----------------------------------------------------------------------------------------------------------------------*/
 void MainWindow::receiver_tcp_stop()
 {
     connect(this, SIGNAL(signal_finished_send()), this, SLOT(slot_stop_timer()));
@@ -328,6 +688,22 @@ void MainWindow::receiver_tcp_stop()
     tcp_server->disconnect();
 }
 
+/*------------------------------------------------------------------------------------------------------------------
+-- FUNCTION:    init_ui
+--
+-- DATE:        Feb.12, 2019
+--
+-- DESIGNER:    Daniel Shin
+--
+-- PROGRAMMER:  Daniel Shin
+--
+-- INTERFACE:   void init_ui()
+--
+-- RETURNS:     void
+--
+-- NOTES:
+--              
+----------------------------------------------------------------------------------------------------------------------*/
 void MainWindow::receiver_udp_stop()
 {
     connect(this, SIGNAL(signal_finished_send()), this, SLOT(slot_stop_timer()));
@@ -337,19 +713,66 @@ void MainWindow::receiver_udp_stop()
     udp_socket->disconnectFromHost();
 }
 
+/*------------------------------------------------------------------------------------------------------------------
+-- FUNCTION:    init_ui
+--
+-- DATE:        Feb.12, 2019
+--
+-- DESIGNER:    Daniel Shin
+--
+-- PROGRAMMER:  Daniel Shin
+--
+-- INTERFACE:   void init_ui()
+--
+-- RETURNS:     void
+--
+-- NOTES:
+--              
+----------------------------------------------------------------------------------------------------------------------*/
 void MainWindow::update_transfer_statistics()
 {
     ui->label_total_data_transferred->setText(QString("Total Data Transferred: ").append(QString::number(file_size * sender_packet_count)));
 }
 
+/*------------------------------------------------------------------------------------------------------------------
+-- FUNCTION:    init_ui
+--
+-- DATE:        Feb.12, 2019
+--
+-- DESIGNER:    Daniel Shin
+--
+-- PROGRAMMER:  Daniel Shin
+--
+-- INTERFACE:   void init_ui()
+--
+-- RETURNS:     void
+--
+-- NOTES:
+--              
+----------------------------------------------------------------------------------------------------------------------*/
 void MainWindow::slot_start_timer()
 {
     timer.start();
 }
 
+/*------------------------------------------------------------------------------------------------------------------
+-- FUNCTION:    init_ui
+--
+-- DATE:        Feb.12, 2019
+--
+-- DESIGNER:    Daniel Shin
+--
+-- PROGRAMMER:  Daniel Shin
+--
+-- INTERFACE:   void init_ui()
+--
+-- RETURNS:     void
+--
+-- NOTES:
+--              
+----------------------------------------------------------------------------------------------------------------------*/
 void MainWindow::slot_stop_timer()
 {
     total_transfer_time = timer.msec() / 1000.0;
     ui->label_total_transfer_time->setText(QString("Total Transfer Time: ").append(QString::number(total_transfer_time)).append(" s"));
 }
-
